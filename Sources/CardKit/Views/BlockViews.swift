@@ -15,6 +15,8 @@ import SwiftUI
 /// One block, by its type.
 struct BlockView: View {
     var block: Block
+    /// Its place on the card (map snapshots are keyed by it).
+    var index: Int = 0
     var body: some View {
         switch block {
         case .list(let b): ListBlockView(block: b)
@@ -37,6 +39,13 @@ struct BlockView: View {
         case .score(let b): ScoreBlockView(block: b)
         case .text(let b): TextBlockView(block: b)
         case .images(let b): ImagesBlockView(block: b)
+        case .award(let b): AwardBlockView(block: b)
+        case .awards(let b): AwardsBlockView(block: b)
+        case .tracker(let b): TrackerBlockView(block: b)
+        case .map(let b): MapBlockView(block: b, index: index)
+        case .qr(let b): QRBlockView(block: b)
+        case .pair(let b): PairBlockView(block: b)
+        case .month(let b): MonthBlockView(block: b)
         }
     }
 }
@@ -96,6 +105,7 @@ struct TilesBlockView: View {
 struct BreakdownBlockView: View {
     @Environment(\.cardTheme) var t
     @Environment(\.cardLocale) var locale
+    @Environment(\.cardWords) var words
     var block: BreakdownBlock
     var body: some View {
         let ordered = CardMath.ordered(block.rows)
@@ -111,11 +121,15 @@ struct BreakdownBlockView: View {
                         Text(entry.part.name).font(Fonts.row).foregroundStyle(t.ink).lineLimit(1)
                         Spacer(minLength: 6)
                         Text(CardMath.text(entry.part.value, unit: block.unit, whole: true, locale: locale)).font(Fonts.row).foregroundStyle(t.ink).monospacedDigit().fixedSize()
-                        Text("\(shares[index]) %").font(Fonts.meta).foregroundStyle(t.quiet).monospacedDigit().frame(width: 36, alignment: .trailing)
+                        // A refund (negative part) has no share of what was spent.
+                        Text(entry.part.value.value < 0 ? "—" : "\(shares[index]) %").font(Fonts.meta).foregroundStyle(t.quiet).monospacedDigit()
+                            .frame(width: 36, alignment: .trailing)
                     }
                     HStack(spacing: 8) {
                         GeometryReader { g in
-                            Capsule().fill(t.slot(entry.slot)).frame(width: max(6, g.size.width * (top > 0 ? CardMath.double(entry.part.value) / top : 0)))
+                            if entry.part.value.value > 0 {
+                                Capsule().fill(t.slot(entry.slot)).frame(width: max(6, g.size.width * (top > 0 ? CardMath.double(entry.part.value) / top : 0)))
+                            }
                         }.frame(height: Metric.bar)
                         if changes { change(CardMath.change(entry.part)).frame(width: 64, alignment: .trailing) }
                     }
@@ -128,7 +142,7 @@ struct BreakdownBlockView: View {
         let parts: (String, String)? = switch change {
             case .up(let a): ("arrow.up", CardMath.text(a, unit: block.unit, whole: true, locale: locale))
             case .down(let a): ("arrow.down", CardMath.text(a, unit: block.unit, whole: true, locale: locale))
-            case .same: ("equal", "same")
+            case .same: ("equal", words("change_same"))
             case nil: nil
         }
         if let parts {
@@ -137,7 +151,7 @@ struct BreakdownBlockView: View {
                 Text(parts.1)
             }.font(Fonts.meta.monospacedDigit()).foregroundStyle(t.quiet)
         } else {
-            Text("new").font(Fonts.meta).foregroundStyle(t.quiet)
+            Text(words("change_new")).font(Fonts.meta).foregroundStyle(t.quiet)
         }
     }
 }
@@ -166,6 +180,7 @@ struct LimitsBlockView: View {
 struct SegmentedBlockView: View {
     @Environment(\.cardTheme) var t
     @Environment(\.cardLocale) var locale
+    @Environment(\.cardWords) var words
     var block: SegmentedBlock
     var body: some View {
         let (pieces, rest) = CardMath.segments(block)
@@ -188,7 +203,7 @@ struct SegmentedBlockView: View {
                 }
                 if rest > 0, let of = block.of {
                     let free = CardMath.minus(of, CardMath.sum(block.parts.map(\.value)) ?? Amount(0))
-                    legend(t.track, block.restLabel ?? "Free", CardMath.text(free, unit: block.unit, whole: true, locale: locale), shares.last ?? 0)
+                    legend(t.track, block.restLabel ?? words("free"), CardMath.text(free, unit: block.unit, whole: true, locale: locale), shares.last ?? 0)
                 }
             }
         }

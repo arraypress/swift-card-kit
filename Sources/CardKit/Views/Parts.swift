@@ -13,11 +13,23 @@ import SwiftUI
 
 private struct ThemeKey: EnvironmentKey { static let defaultValue = Theme.light }
 private struct LocaleKey: EnvironmentKey { static let defaultValue = Locale.current }
+private struct WordsKey: EnvironmentKey { static let defaultValue = Words() }
+private struct MapsKey: EnvironmentKey { nonisolated(unsafe) static let defaultValue: [Int: CGImage] = [:] }
 
 extension EnvironmentValues {
     var cardTheme: Theme {
         get { self[ThemeKey.self] }
         set { self[ThemeKey.self] = newValue }
+    }
+    /// The kit's own phrases, as the card words them.
+    var cardWords: Words {
+        get { self[WordsKey.self] }
+        set { self[WordsKey.self] = newValue }
+    }
+    /// Map snapshots prepared before drawing, by block index.
+    var cardMaps: [Int: CGImage] {
+        get { self[MapsKey.self] }
+        set { self[MapsKey.self] = newValue }
     }
     /// The reader's locale for numbers and money ("2,209" in Britain, "2.209" in Germany).
     var cardLocale: Locale {
@@ -51,12 +63,21 @@ struct HeroNumber: View {
     @Environment(\.cardTheme) var t
     var value: String; var unit: String? = nil
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 5) {
-            // A figure is drawn big; words ("Dr Patel's surgery") a size down, as a title.
-            Text(value).font(value.count > 10 ? Fonts.heroWords : Fonts.hero).foregroundStyle(t.ink).monospacedDigit()
-                .minimumScaleFactor(0.5).lineLimit(value.count > 10 ? 2 : 1)
-            if let unit, !unit.isEmpty { Text(unit).font(Fonts.heroUnit).foregroundStyle(t.quiet).lineLimit(1) }
+        // The unit sits beside the value when it fits, and drops to its own line when it doesn't — never cut short.
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline, spacing: 5) { number; unitText.fixedSize() }
+            VStack(alignment: .leading, spacing: 2) { number; unitText.fixedSize(horizontal: false, vertical: true) }
         }
+    }
+
+    var number: some View {
+        // A figure is drawn big; words ("Dr Patel's surgery") a size down, as a title.
+        Text(value).font(value.count > 10 ? Fonts.heroWords : Fonts.hero).foregroundStyle(t.ink).monospacedDigit()
+            .minimumScaleFactor(0.5).lineLimit(value.count > 10 ? 2 : 1)
+    }
+
+    @ViewBuilder var unitText: some View {
+        if let unit, !unit.isEmpty { Text(unit).font(Fonts.heroUnit).foregroundStyle(t.quiet) }
     }
 }
 
@@ -151,6 +172,7 @@ struct Dot: View {
 struct LimitRowView: View {
     @Environment(\.cardTheme) var t
     @Environment(\.cardLocale) var locale
+    @Environment(\.cardWords) var words
     var row: LimitRow; var slot: Int; var unit: String?
     var body: some View {
         let color = t.slot(slot)
@@ -160,14 +182,14 @@ struct LimitRowView: View {
                 Text(row.name).font(Fonts.row).foregroundStyle(t.ink).lineLimit(1)
                 Spacer(minLength: 6)
                 Text(CardMath.text(row.value, unit: unit, whole: true, locale: locale)).font(Fonts.row).foregroundStyle(t.ink).monospacedDigit().fixedSize()
-                Text("of \(CardMath.text(row.of, whole: true, locale: locale))").font(Fonts.meta).foregroundStyle(t.quiet).monospacedDigit().fixedSize()
+                Text(words("of", ["total": CardMath.text(row.of, whole: true, locale: locale)])).font(Fonts.meta).foregroundStyle(t.quiet).monospacedDigit().fixedSize()
             }
             LimitBar(value: row.value, of: row.of, color: color)
             if CardMath.isOver(row.value, of: row.of) {
                 let excess = CardMath.text(CardMath.minus(row.value, row.of), unit: unit, whole: true, locale: locale)
                 HStack(spacing: 4) {
                     Image(systemName: "arrow.up.circle.fill")
-                    Text("\(excess) over")
+                    Text(words("row_over", ["amount": excess]))
                 }.font(Fonts.meta.weight(.semibold)).foregroundStyle(t.overInk)
             }
         }

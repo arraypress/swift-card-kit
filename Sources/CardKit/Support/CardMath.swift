@@ -117,28 +117,28 @@ public enum CardMath {
         return limit > 0 ? double(row.value) / limit : .infinity
     }
 
-    static func hero(_ block: LimitsBlock, locale: Locale) -> Hero {
+    static func hero(_ block: LimitsBlock, locale: Locale, words: Words = Words()) -> Hero {
         let (used, limit) = totals(block)
         let left = minus(limit, used)
         let suffix = block.unit.map { " \($0)" } ?? ""
         let of = text(limit, whole: true, locale: locale) + suffix
-        return left.value >= 0 ? Hero(value: .text(text(left, whole: true, locale: locale) + suffix), unit: "left of \(of)")
-                               : Hero(value: .text(text(abs(left), whole: true, locale: locale) + suffix), unit: "over \(of)")
+        return left.value >= 0 ? Hero(value: .text(text(left, whole: true, locale: locale) + suffix), unit: words("left_of", ["total": of]))
+                               : Hero(value: .text(text(abs(left), whole: true, locale: locale) + suffix), unit: words("over_of", ["total": of]))
     }
 
-    static func status(_ block: LimitsBlock, locale: Locale) -> StatusText {
+    static func status(_ block: LimitsBlock, locale: Locale, words: Words = Words()) -> StatusText {
         let (used, limit) = totals(block)
         let left = minus(limit, used)
         let suffix = block.unit.map { " \($0)" } ?? ""
         let overRows = block.rows.filter { isOver($0.value, of: $0.of) }.count
-        if left.value < 0 { return StatusText(status: .over, text: "\(text(abs(left), whole: true, locale: locale))\(suffix) over the limit") }
+        if left.value < 0 { return StatusText(status: .over, text: words("over_the_limit", ["amount": text(abs(left), whole: true, locale: locale) + suffix])) }
         if let days = block.daysLeft, days > 0 {
             let perDay = Amount(left.value / Decimal(days), currency: left.currency)
             return StatusText(status: overRows == 0 ? .good : .neutral,
-                              text: "About \(text(perDay, whole: true, locale: locale))\(suffix) a day for the \(days) \(days == 1 ? "day" : "days") left")
+                              text: words(days == 1 ? "a_day_one" : "a_day", ["amount": text(perDay, whole: true, locale: locale) + suffix, "days": "\(days)"]))
         }
-        return overRows == 0 ? StatusText(status: .good, text: "Every part within its limit")
-                             : StatusText(status: .neutral, text: "\(overRows) of \(block.rows.count) over their limit")
+        return overRows == 0 ? StatusText(status: .good, text: words("all_within"))
+                             : StatusText(status: .neutral, text: words("some_over", ["over": "\(overRows)", "count": "\(block.rows.count)"]))
     }
 
     // MARK: - breakdown and segmented
@@ -173,18 +173,18 @@ public enum CardMath {
         return delta > 0 ? .up(Amount(delta, currency: part.value.currency)) : .down(Amount(-delta, currency: part.value.currency))
     }
 
-    static func hero(_ block: BreakdownBlock, locale: Locale) -> Hero? {
+    static func hero(_ block: BreakdownBlock, locale: Locale, words: Words = Words()) -> Hero? {
         guard let total = sum(block.rows.map(\.value)) else { return nil }
-        return Hero(value: .text(text(total, unit: block.unit, whole: true, locale: locale)), unit: "in all")
+        return Hero(value: .text(text(total, unit: block.unit, whole: true, locale: locale)), unit: words("in_all"))
     }
 
-    static func status(_ block: BreakdownBlock, locale: Locale) -> StatusText? {
+    static func status(_ block: BreakdownBlock, locale: Locale, words: Words = Words()) -> StatusText? {
         guard let reference = block.reference, let total = sum(block.rows.map(\.value)) else { return nil }
         let delta = reference.value.value - total.value
         let amount = text(Amount(delta < 0 ? -delta : delta, currency: total.currency), unit: block.unit, whole: true, locale: locale)
-        if isLevel(delta) { return StatusText(status: .neutral, text: "Same as \(reference.label)") }
-        return delta > 0 ? StatusText(status: .good, text: "\(amount) less than \(reference.label)")
-                         : StatusText(status: .over, text: "\(amount) more than \(reference.label)")
+        if isLevel(delta) { return StatusText(status: .neutral, text: words("same_as", ["label": reference.label])) }
+        return delta > 0 ? StatusText(status: .good, text: words("less_than", ["amount": amount, "label": reference.label]))
+                         : StatusText(status: .over, text: words("more_than", ["amount": amount, "label": reference.label]))
     }
 
     /// A segmented bar's pieces as fractions of the whole (the capacity, or the parts' sum), largest first, and
@@ -253,24 +253,24 @@ public enum CardMath {
         return Hero(value: .text(number), unit: currency == nil ? block.unit : nil)
     }
 
-    static func status(_ block: BarsBlock, locale: Locale) -> StatusText? {
+    static func status(_ block: BarsBlock, locale: Locale, words: Words = Words()) -> StatusText? {
         guard let index = highlighted(block), let value = total(block.bars[index]) else { return nil }
         let currency = block.bars.compactMap { $0.value?.currency ?? $0.parts?.first?.currency }.first
-        let words = { (v: Double) in text(Amount(Decimal(v.rounded()), currency: currency), unit: block.unit, whole: true, locale: locale) }
+        let say = { (v: Double) in text(Amount(Decimal(v.rounded()), currency: currency), unit: block.unit, whole: true, locale: locale) }
         if let band = block.band {
             let low = double(band.low), high = double(band.high)
-            if value < low { return StatusText(status: .neutral, text: "\(words(low - value)) under the target") }
-            if value > high { return StatusText(status: .over, text: "\(words(value - high)) over the target") }
-            return StatusText(status: .good, text: "On target")
+            if value < low { return StatusText(status: .neutral, text: words("under_target", ["amount": say(low - value)])) }
+            if value > high { return StatusText(status: .over, text: words("over_target", ["amount": say(value - high)])) }
+            return StatusText(status: .good, text: words("on_target"))
         }
         if let goal = block.goal.map(double) {
-            return value >= goal ? StatusText(status: .good, text: "Goal reached")
-                                 : StatusText(status: .neutral, text: "\(words(goal - value)) to the goal")
+            return value >= goal ? StatusText(status: .good, text: words("goal_reached"))
+                                 : StatusText(status: .neutral, text: words("to_goal", ["amount": say(goal - value)]))
         }
         guard let average = average(block), average > 0 else { return nil }
         let percent = (value - average) / average * 100
-        if Swift.abs(percent) < 2 { return StatusText(status: .neutral, text: "About your average") }
-        return StatusText(status: .neutral, text: "\(percentChange(percent, locale: locale)) against the average of \(words(average))")
+        if Swift.abs(percent) < 2 { return StatusText(status: .neutral, text: words("about_average")) }
+        return StatusText(status: .neutral, text: words("vs_average", ["change": percentChange(percent, locale: locale), "amount": say(average)]))
     }
 
     /// A round number at or above `value`: 1, 1.5, 2, 2.5, 3, 4, 5, 6 or 8 times a power of ten.
@@ -305,28 +305,28 @@ public enum CardMath {
         }
     }
 
-    static func hero(_ block: TrendBlock, locale: Locale) -> Hero? {
+    static func hero(_ block: TrendBlock, locale: Locale, words: Words = Words()) -> Hero? {
         guard let now = latest(block) else { return nil }
-        return Hero(value: .text(text(now.value, unit: block.unit, whole: true, locale: locale)), unit: block.target != nil ? "so far" : nil)
+        return Hero(value: .text(text(now.value, unit: block.unit, whole: true, locale: locale)), unit: block.target != nil ? words("so_far") : nil)
     }
 
     /// The first series against the second at the same x.
-    static func status(_ block: TrendBlock, locale: Locale) -> StatusText? {
+    static func status(_ block: TrendBlock, locale: Locale, words: Words = Words()) -> StatusText? {
         guard let now = latest(block), block.series.count > 1, let then = value(block.series[1], at: now.x) else {
             return block.series.first.flatMap { first in
                 guard first.points.count > 1 else { return nil }
                 let delta = first.points.last!.value.value - first.points.first!.value.value
-                if isLevel(delta) { return StatusText(status: .neutral, text: "Level over the period") }
+                if isLevel(delta) { return StatusText(status: .neutral, text: words("level_over_period")) }
                 let amount = text(Amount(delta < 0 ? -delta : delta, currency: first.points[0].value.currency), unit: block.unit, whole: true, locale: locale)
-                return StatusText(status: .neutral, text: delta > 0 ? "Up \(amount) over the period" : "Down \(amount) over the period")
+                return StatusText(status: .neutral, text: words(delta > 0 ? "up_over_period" : "down_over_period", ["amount": amount]))
             }
         }
         let delta = then.value - now.value.value
         let amount = text(Amount(delta < 0 ? -delta : delta, currency: now.value.currency), unit: block.unit, whole: true, locale: locale)
         let name = block.series[1].name
-        if isLevel(delta) { return StatusText(status: .neutral, text: "Level with \(name) by now") }
-        return delta > 0 ? StatusText(status: .good, text: "\(amount) under \(name) by now")
-                         : StatusText(status: .over, text: "\(amount) over \(name) by now")
+        if isLevel(delta) { return StatusText(status: .neutral, text: words("level_by_now", ["name": name])) }
+        return delta > 0 ? StatusText(status: .good, text: words("under_by_now", ["amount": amount, "name": name]))
+                         : StatusText(status: .over, text: words("over_by_now", ["amount": amount, "name": name]))
     }
 
     /// Where the current pace ends: the latest running total scaled from its x to the end.
@@ -337,14 +337,15 @@ public enum CardMath {
     }
 
     /// "At this pace about £1,670 by the end — £130 under the target."
-    public static func projectionText(_ block: TrendBlock, locale: Locale = .current) -> String? {
+    public static func projectionText(_ block: TrendBlock, locale: Locale = .current, words: Words = Words()) -> String? {
         guard block.target != nil, let projected = projection(block) else { return nil }
-        var line = "At this pace about \(text(projected, unit: block.unit, whole: true, locale: locale)) by the end"
+        var line = words("projection", ["amount": text(projected, unit: block.unit, whole: true, locale: locale)])
         if let target = block.target {
             let delta = target.value.value - projected.value
             let gap = text(Amount(delta < 0 ? -delta : delta, currency: projected.currency), unit: block.unit, whole: true, locale: locale)
-            let name = target.label ?? "the target"
-            line += isLevel(delta) ? ", right on \(name)" : delta > 0 ? " — \(gap) under \(name)" : " — \(gap) over \(name)"
+            let name = target.label ?? words("the_target")
+            line += isLevel(delta) ? words("projection_on", ["name": name])
+                : words(delta > 0 ? "projection_under" : "projection_over", ["amount": gap, "name": name])
         }
         return line + "."
     }
@@ -440,6 +441,65 @@ public enum CardMath {
         }
     }
 
+    // MARK: - month
+
+    /// Days in a "2026-10" month; nil if it isn't one.
+    public static func monthLength(_ month: String) -> Int? {
+        guard let first = day(month + "-01") else { return nil }
+        return utc.range(of: .day, in: .month, for: first)?.count
+    }
+
+    /// The month as weeks of seven (Monday first), nil where a cell is outside the month.
+    public static func monthGrid(_ month: String) -> [[Int?]]? {
+        guard let length = monthLength(month), let first = day(month + "-01") else { return nil }
+        let offset = (utc.component(.weekday, from: first) + 5) % 7
+        let cells: [Int?] = Array(repeating: nil, count: offset) + (1...length).map { $0 }
+        let padded = cells + Array(repeating: nil, count: (7 - cells.count % 7) % 7)
+        return stride(from: 0, to: padded.count, by: 7).map { Array(padded[$0..<$0 + 7]) }
+    }
+
+    /// "October 2026" in the reader's language.
+    public static func monthTitle(_ month: String, locale: Locale = .current) -> String? {
+        guard let first = day(month + "-01") else { return nil }
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.setLocalizedDateFormatFromTemplate("MMMMyyyy")
+        return formatter.string(from: first)
+    }
+
+    private static var utc: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        return calendar
+    }
+
+    // MARK: - tracker and awards
+
+    /// Each step's state: as given, else done before the current one and upcoming after it (all upcoming if none is current).
+    public static func states(_ block: TrackerBlock) -> [String] {
+        let current = block.steps.firstIndex { $0.state == "current" }
+        return block.steps.enumerated().map { index, step in
+            step.state ?? (current.map { index < $0 ? "done" : "upcoming" } ?? "upcoming")
+        }
+    }
+
+    /// How far along an award not yet earned is: 0…1.
+    public static func progress(_ award: AwardItem) -> Double {
+        guard let progress = award.progress, let of = award.of else { return award.earned ? 1 : 0 }
+        return fill(progress, of: of)
+    }
+
+    // MARK: - map
+
+    /// The region to show: every pin and route point, padded by a fifth, at least about 600 m across.
+    public static func mapRegion(_ block: MapBlock) -> (lat: Double, lon: Double, latSpan: Double, lonSpan: Double) {
+        let points = block.pins.map { ($0.lat, $0.lon) } + (block.route ?? []).map { ($0.lat, $0.lon) }
+        let lats = points.map(\.0), lons = points.map(\.1)
+        let minLat = lats.min() ?? 0, maxLat = lats.max() ?? 0, minLon = lons.min() ?? 0, maxLon = lons.max() ?? 0
+        return ((minLat + maxLat) / 2, (minLon + maxLon) / 2, max(0.006, (maxLat - minLat) * 1.4), max(0.009, (maxLon - minLon) * 1.4))
+    }
+
     /// A "2026-09-01" date at midnight UTC.
     static func day(_ text: String) -> Date? {
         let formatter = DateFormatter()
@@ -455,12 +515,13 @@ public enum CardMath {
     /// The hero drawn: the card's, else one the first limits / breakdown / bars / trend block supplies.
     public static func hero(_ card: Card, locale: Locale = .current) -> Hero? {
         if let hero = card.hero { return hero }
+        let words = Words(card.wording)
         for block in card.blocks {
             switch block {
-            case .limits(let b): return hero(b, locale: locale)
-            case .breakdown(let b): return hero(b, locale: locale)
+            case .limits(let b): return hero(b, locale: locale, words: words)
+            case .breakdown(let b): return hero(b, locale: locale, words: words)
             case .bars(let b): return hero(b, locale: locale)
-            case .trend(let b): return hero(b, locale: locale)
+            case .trend(let b): return hero(b, locale: locale, words: words)
             default: continue
             }
         }
@@ -470,12 +531,13 @@ public enum CardMath {
     /// The status drawn: the card's, else one the first block that has one supplies.
     public static func status(_ card: Card, locale: Locale = .current) -> StatusText? {
         if let status = card.status { return status }
+        let words = Words(card.wording)
         for block in card.blocks {
             let found: StatusText? = switch block {
-                case .limits(let b): status(b, locale: locale)
-                case .breakdown(let b): status(b, locale: locale)
-                case .bars(let b): status(b, locale: locale)
-                case .trend(let b): status(b, locale: locale)
+                case .limits(let b): status(b, locale: locale, words: words)
+                case .breakdown(let b): status(b, locale: locale, words: words)
+                case .bars(let b): status(b, locale: locale, words: words)
+                case .trend(let b): status(b, locale: locale, words: words)
                 default: nil
             }
             if let found { return found }

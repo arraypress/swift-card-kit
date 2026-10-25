@@ -20,7 +20,7 @@ struct CardView: View {
             Eyebrow(text: card.eyebrow)
             if let hero = CardMath.hero(card, locale: locale) { HeroView(hero: hero) }
             if let status = CardMath.status(card, locale: locale) { StatusLine(status: status).padding(.top, -8) }
-            ForEach(Array(card.blocks.enumerated()), id: \.offset) { _, block in BlockView(block: block) }
+            ForEach(Array(card.blocks.enumerated()), id: \.offset) { index, block in BlockView(block: block, index: index) }
             if let footnote = card.footnote, !footnote.isEmpty { Footnote(text: footnote) }
         }
     }

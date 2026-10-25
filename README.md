@@ -36,7 +36,7 @@ the total against last time, the latest bar against its goal or average, a runni
 
 ## Blocks
 
-Twenty forms, chosen from what the fleet's tools report (an inventory of every tool's output, 2026-10-26):
+Twenty-seven forms, chosen from what the fleet's tools report (an inventory of every tool's output, 2026-10-26), plus achievements, tracking, maps, QR codes, before/after and a month:
 
 | Block | For | Apple equivalent |
 |---|---|---|
@@ -60,8 +60,15 @@ Twenty forms, chosen from what the fleet's tools report (an inventory of every t
 | `score` | a match as it stands | Sports |
 | `text` | a paragraph, bullets, a quotation | — |
 | `images` | local pictures in a grid | Photos |
+| `award` | one achievement: a medal (gold, silver, bronze or the part's colour), what it took, a personal best's before → after | Fitness awards |
+| `awards` | medals earned in colour, ones still to earn in grey with a progress ring | Fitness Awards |
+| `tracker` | steps in order — done, now, next, failed: a parcel, a flight, an order | Wallet order tracking |
+| `map` | Apple Maps with pins and a route (needs the network when drawn) | Maps |
+| `qr` | a QR code to scan: Wi-Fi, a payment link, a ticket | Wallet passes |
+| `pair` | two pictures side by side: before and after an edit | Photos edit |
+| `month` | a month's calendar, days marked by colour, today ringed | Calendar month |
 
-`CardExamples.all` holds a worked card for each kind of report (23, every block used); `card example <name>`
+`CardExamples.all` holds a worked card for each kind of report (34, every block used); `card example <name>`
 prints one.
 
 ## The look
@@ -88,6 +95,23 @@ through a `Double`). It must be exact to the currency's smallest unit (two decim
 for BHD — ISO 4217), one currency per card, never added to plain numbers. A single amount shows its pence
 (£4.20); totals are whole (£1,188). Numbers and money are written for the reader's locale.
 
+## Text, files and words
+
+- **Every card has a text version** — `CardText.text(card)`: the same numbers in reading order, for VoiceOver (as the
+  picture's description), Messages search, a phone that won't load the image, and the record of what was sent. A
+  QR code's contents are never put in it (they can be a Wi-Fi password).
+- **Cards are private and short-lived** — `CardFiles.newCard()` gives a new file in
+  `~/Library/Caches/arraypress/cards` (mode 0700) and removes cards older than a day: they show meals, money and
+  health, so they don't go in /tmp and don't pile up after they're sent.
+- **The kit's own words can be replaced** — a card's `wording` swaps any phrase the kit writes itself ("left of
+  {total}", "{amount} over the limit", "of {total}"…) for another language or the owner's own words; `Words.english`
+  lists all 46 and their placeholders, and a misspelt id or placeholder is refused rather than ignored.
+- **Refunds** — a breakdown part may be negative: listed last, no bar, no share of what was spent, and taken off the
+  net total.
+- **Maps** — `CardRenderer.maps(for: card)` fetches them from Apple Maps first (MKMapSnapshotter works from a
+  command line tool; measured about 3 s with the network) and draws the route and pins in the card's colours;
+  `render(…, maps:)` draws what it's given, and a map it couldn't fetch says so on the card.
+
 ## Refused, not drawn wrong
 
 `CardChecks.problem(card)` names the field: `blocks[0].rows[0].value: 4.205 has more decimals than GBP has`,
@@ -95,12 +119,19 @@ for BHD — ISO 4217), one currency per card, never added to plain numbers. A si
 blocks[1].rows[1]`, `hero.symbol: no SF Symbol named 'clould'`, `blocks[0].bars[2].parts: 2 parts but the legend
 names 3`. `CardRenderer.render` throws `CardError.invalid` with it and draws nothing.
 
+## Reference pictures
+
+`Tests/CardKitTests/Golden/` holds every example drawn light at 1× (33, maps left out). The tests redraw them and
+name any that changed by more than 0.5 % of their pixels — a warning, because a macOS update can move a glyph;
+`CARDKIT_GOLDEN_STRICT=1` makes it a failure, and `CARDKIT_GOLDEN_UPDATE=1` redraws them after a deliberate change.
+
 ## Measured
 
 - 1,254 px wide, about 0.1 s a card from the command line (`card`, 2026-10-26, M-series Mac).
-- 31 tests: every rule of the arithmetic and the checks against hand-worked values, and all 23 examples drawn in
-  both themes. 31 of 32 deliberate breaks of those rules made a test fail; the one that didn't removes an explicit
-  tie-break that Swift's stable sort makes redundant (kept, because stability is not documented).
+- 45 tests: every rule of the arithmetic, the checks, the wording, the text version and the private files against
+  hand-worked values; all 34 examples drawn in both themes; 33 reference pictures compared. Deliberate breaks of the
+  rules: 31 of 32 (0.1) and 21 of 22 (0.2) made a test fail; the two that didn't are equivalent (a tie-break Swift's
+  stable sort already makes, and a tracker rule the "current" state always overrides).
 
 ## Requirements
 

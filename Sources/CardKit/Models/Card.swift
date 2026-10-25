@@ -21,9 +21,14 @@ public struct Card: Codable, Equatable, Sendable {
     public var status: StatusText?
     public var blocks: [Block]
     public var footnote: String?
+    /// The kit's own phrases, replaced: {"left_of": "übrig von {total}"} — for another language or other words.
+    /// `card words` lists every phrase and its placeholders.
+    public var wording: [String: String]?
 
-    public init(eyebrow: String, hero: Hero? = nil, status: StatusText? = nil, blocks: [Block], footnote: String? = nil) {
+    public init(eyebrow: String, hero: Hero? = nil, status: StatusText? = nil, blocks: [Block], footnote: String? = nil,
+                wording: [String: String]? = nil) {
         self.eyebrow = eyebrow; self.hero = hero; self.status = status; self.blocks = blocks; self.footnote = footnote
+        self.wording = wording
     }
 }
 
@@ -86,12 +91,13 @@ public enum Block: Codable, Equatable, Sendable {
     case trend(TrendBlock), range(RangeBlock), hourly(HourlyBlock), rings(RingsBlock), gauges(GaugesBlock)
     case segmented(SegmentedBlock), timeline(TimelineBlock), heatmap(HeatmapBlock), sparklines(SparklinesBlock)
     case chips(ChipsBlock), comparison(ComparisonBlock), table(TableBlock), score(ScoreBlock), text(TextBlock)
-    case images(ImagesBlock)
+    case images(ImagesBlock), award(AwardBlock), awards(AwardsBlock), tracker(TrackerBlock), map(MapBlock), qr(QRBlock)
+    case pair(PairBlock), month(MonthBlock)
 
     /// Every type name, as written in JSON.
     public static let types = ["list", "tiles", "breakdown", "limits", "bars", "trend", "range", "hourly", "rings", "gauges",
                                "segmented", "timeline", "heatmap", "sparklines", "chips", "comparison", "table", "score",
-                               "text", "images"]
+                               "text", "images", "award", "awards", "tracker", "map", "qr", "pair", "month"]
 
     public var type: String {
         switch self {
@@ -115,6 +121,13 @@ public enum Block: Codable, Equatable, Sendable {
         case .score: "score"
         case .text: "text"
         case .images: "images"
+        case .award: "award"
+        case .awards: "awards"
+        case .tracker: "tracker"
+        case .map: "map"
+        case .qr: "qr"
+        case .pair: "pair"
+        case .month: "month"
         }
     }
 
@@ -143,6 +156,13 @@ public enum Block: Codable, Equatable, Sendable {
         case "score": self = .score(try ScoreBlock(from: decoder))
         case "text": self = .text(try TextBlock(from: decoder))
         case "images": self = .images(try ImagesBlock(from: decoder))
+        case "award": self = .award(try AwardBlock(from: decoder))
+        case "awards": self = .awards(try AwardsBlock(from: decoder))
+        case "tracker": self = .tracker(try TrackerBlock(from: decoder))
+        case "map": self = .map(try MapBlock(from: decoder))
+        case "qr": self = .qr(try QRBlock(from: decoder))
+        case "pair": self = .pair(try PairBlock(from: decoder))
+        case "month": self = .month(try MonthBlock(from: decoder))
         default:
             throw DecodingError.dataCorruptedError(forKey: .type, in: try decoder.container(keyedBy: Keys.self),
                                                    debugDescription: "'\(type)' is not a block type (\(Block.types.joined(separator: ", ")))")
@@ -173,6 +193,13 @@ public enum Block: Codable, Equatable, Sendable {
         case .score(let b): try b.encode(to: encoder)
         case .text(let b): try b.encode(to: encoder)
         case .images(let b): try b.encode(to: encoder)
+        case .award(let b): try b.encode(to: encoder)
+        case .awards(let b): try b.encode(to: encoder)
+        case .tracker(let b): try b.encode(to: encoder)
+        case .map(let b): try b.encode(to: encoder)
+        case .qr(let b): try b.encode(to: encoder)
+        case .pair(let b): try b.encode(to: encoder)
+        case .month(let b): try b.encode(to: encoder)
         }
     }
 }
@@ -685,4 +712,146 @@ public struct Picture: Codable, Equatable, Sendable {
     public init(path: String, caption: String? = nil) {
         self.path = path; self.caption = caption
     }
+}
+
+
+/// `award`: one achievement, celebrated — a medal, what it's for, what it took, when.
+public struct AwardBlock: Codable, Equatable, Sendable {
+    /// "7-day streak", "New personal best".
+    public var title: String
+    /// What it took: "Logged every meal for a week".
+    public var detail: String?
+    /// The SF Symbol in the medal: "flame.fill", "trophy.fill", "star.fill".
+    public var symbol: String
+    /// "gold", "silver", "bronze" — or none, for the part's colour (`slot`).
+    public var tier: String?
+    public var slot: Int?
+    /// When it was earned, as words: "26 Oct 2026".
+    public var date: String?
+    /// A before → after for a personal best: "90 kg → 100 kg".
+    public var record: String?
+
+    public init(title: String, detail: String? = nil, symbol: String, tier: String? = nil, slot: Int? = nil, date: String? = nil, record: String? = nil) {
+        self.title = title; self.detail = detail; self.symbol = symbol; self.tier = tier; self.slot = slot; self.date = date; self.record = record
+    }
+}
+
+/// `awards`: medals earned in colour, ones still to earn in grey with how far along (Fitness Awards-style).
+public struct AwardsBlock: Codable, Equatable, Sendable {
+    public var label: String?
+    public var awards: [AwardItem]
+
+    public init(label: String? = nil, awards: [AwardItem]) { self.label = label; self.awards = awards }
+}
+
+public struct AwardItem: Codable, Equatable, Sendable {
+    public var title: String
+    public var symbol: String
+    public var tier: String?
+    public var slot: Int?
+    public var earned: Bool
+    /// Earned: when, as words. Not yet: nil.
+    public var date: String?
+    /// Not yet earned: how far along, against `of`.
+    public var progress: Amount?
+    public var of: Amount?
+
+    public init(title: String, symbol: String, tier: String? = nil, slot: Int? = nil, earned: Bool, date: String? = nil,
+                progress: Amount? = nil, of: Amount? = nil) {
+        self.title = title; self.symbol = symbol; self.tier = tier; self.slot = slot; self.earned = earned; self.date = date
+        self.progress = progress; self.of = of
+    }
+}
+
+/// `tracker`: steps in order — a parcel, a flight, an order, a renewal — done, now, still to come.
+public struct TrackerBlock: Codable, Equatable, Sendable {
+    public var label: String?
+    public var steps: [TrackerStep]
+
+    public init(label: String? = nil, steps: [TrackerStep]) { self.label = label; self.steps = steps }
+}
+
+public struct TrackerStep: Codable, Equatable, Sendable {
+    public var title: String
+    public var detail: String?
+    /// When, as words: "Mon 09:14", "expected Thu".
+    public var time: String?
+    /// "done", "current", "upcoming" (default) or "failed".
+    public var state: String?
+
+    public init(title: String, detail: String? = nil, time: String? = nil, state: String? = nil) {
+        self.title = title; self.detail = detail; self.time = time; self.state = state
+    }
+}
+
+/// `map`: a map with pins and a route, from Apple Maps (needs the network when drawn).
+public struct MapBlock: Codable, Equatable, Sendable {
+    public var pins: [MapPin]
+    /// A line through these points, in order.
+    public var route: [MapPoint]?
+    /// Points tall: 120–320 (default 200).
+    public var height: Double?
+
+    public init(pins: [MapPin], route: [MapPoint]? = nil, height: Double? = nil) { self.pins = pins; self.route = route; self.height = height }
+}
+
+public struct MapPin: Codable, Equatable, Sendable {
+    public var lat: Double
+    public var lon: Double
+    public var title: String?
+    public var slot: Int?
+    public var status: Status?
+
+    public init(lat: Double, lon: Double, title: String? = nil, slot: Int? = nil, status: Status? = nil) {
+        self.lat = lat; self.lon = lon; self.title = title; self.slot = slot; self.status = status
+    }
+}
+
+public struct MapPoint: Codable, Equatable, Sendable {
+    public var lat: Double
+    public var lon: Double
+
+    public init(lat: Double, lon: Double) { self.lat = lat; self.lon = lon }
+}
+
+/// `qr`: a QR code to scan — Wi-Fi, a payment link, a ticket.
+public struct QRBlock: Codable, Equatable, Sendable {
+    /// What the code holds: a URL, "WIFI:T:WPA;S:Home;P:…;;".
+    public var payload: String
+    /// Beside it: "Scan to join Home Wi-Fi".
+    public var title: String?
+    public var detail: String?
+
+    public init(payload: String, title: String? = nil, detail: String? = nil) { self.payload = payload; self.title = title; self.detail = detail }
+}
+
+/// `pair`: two pictures side by side — before and after an edit.
+public struct PairBlock: Codable, Equatable, Sendable {
+    public var before: Picture
+    public var after: Picture
+
+    public init(before: Picture, after: Picture) { self.before = before; self.after = after }
+}
+
+/// `month`: a month's calendar with days marked — workouts, bills due, days on target.
+public struct MonthBlock: Codable, Equatable, Sendable {
+    /// "2026-10".
+    public var month: String
+    public var days: [MonthDay]
+    /// The day to ring as today.
+    public var today: Int?
+    /// What the marks mean: [{"name": "Workout", "slot": 3}].
+    public var legend: [Tag]?
+
+    public init(month: String, days: [MonthDay], today: Int? = nil, legend: [Tag]? = nil) {
+        self.month = month; self.days = days; self.today = today; self.legend = legend
+    }
+}
+
+public struct MonthDay: Codable, Equatable, Sendable {
+    public var day: Int
+    public var slot: Int?
+    public var status: Status?
+
+    public init(day: Int, slot: Int? = nil, status: Status? = nil) { self.day = day; self.slot = slot; self.status = status }
 }

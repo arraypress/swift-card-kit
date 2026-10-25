@@ -44,6 +44,7 @@ func quietYAxis(ticks: [Double], label: @escaping (Double) -> String, t: Theme) 
 struct BarsBlockView: View {
     @Environment(\.cardTheme) var t
     @Environment(\.cardLocale) var locale
+    @Environment(\.cardWords) var words
     var block: BarsBlock
 
     var body: some View {
@@ -103,10 +104,10 @@ struct BarsBlockView: View {
                 }
             } else if block.goal != nil || block.band != nil || block.average == true {
                 HStack(spacing: 14) {
-                    if let goal = block.goal { LegendKey(color: t.goodInk, text: "Goal \(label(CardMath.double(goal)))", width: 1.5, dashed: true) }
-                    if block.band != nil { LegendKey(color: t.good.opacity(0.35), text: "Target band", square: true) }
+                    if let goal = block.goal { LegendKey(color: t.goodInk, text: words("legend_goal", ["amount": label(CardMath.double(goal))]), width: 1.5, dashed: true) }
+                    if block.band != nil { LegendKey(color: t.good.opacity(0.35), text: words("legend_band"), square: true) }
                     if block.average == true, let average = CardMath.average(block) {
-                        LegendKey(color: t.ink.opacity(0.55), text: "Average \(label(average))", width: 1, dashed: true)
+                        LegendKey(color: t.ink.opacity(0.55), text: words("legend_average", ["amount": label(average)]), width: 1, dashed: true)
                     }
                 }
             }
@@ -119,6 +120,7 @@ struct BarsBlockView: View {
 struct TrendBlockView: View {
     @Environment(\.cardTheme) var t
     @Environment(\.cardLocale) var locale
+    @Environment(\.cardWords) var words
     var block: TrendBlock
 
     var body: some View {
@@ -210,14 +212,14 @@ struct TrendBlockView: View {
             .frame(height: 170)
             if block.series.count > 1 || block.target != nil || block.smooth != nil {
                 Flow(spacing: 14) {
-                    LegendKey(color: t.slot(1), text: block.smooth.map { "\(first.name), \($0)-point average" } ?? first.name, width: 2.5)
+                    LegendKey(color: t.slot(1), text: block.smooth.map { words("legend_smoothed", ["name": first.name, "n": "\($0)"]) } ?? first.name, width: 2.5)
                     ForEach(Array(block.series.dropFirst().enumerated()), id: \.offset) { s, series in
                         LegendKey(color: t.quiet.opacity(s == 0 ? 0.6 : 0.35), text: series.name)
                     }
-                    if let target = block.target { LegendKey(color: t.quiet, text: target.label ?? "Target pace", width: 1.5, dashed: true) }
+                    if let target = block.target { LegendKey(color: t.quiet, text: target.label ?? words("legend_pace"), width: 1.5, dashed: true) }
                 }
             }
-            if let projection = CardMath.projectionText(block, locale: locale) {
+            if let projection = CardMath.projectionText(block, locale: locale, words: words) {
                 Text(projection).font(Fonts.meta).foregroundStyle(t.quiet).fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -277,6 +279,7 @@ struct RangeBlockView: View {
 struct RingsBlockView: View {
     @Environment(\.cardTheme) var t
     @Environment(\.cardLocale) var locale
+    @Environment(\.cardWords) var words
     var block: RingsBlock
 
     var body: some View {
@@ -308,7 +311,7 @@ struct RingsBlockView: View {
                             VStack(spacing: 0) {
                                 Text(CardMath.text(ring.value, whole: true, locale: locale)).font(.system(size: 18, weight: .bold, design: .rounded))
                                     .foregroundStyle(t.ink).monospacedDigit().minimumScaleFactor(0.6).lineLimit(1)
-                                Text("of \(CardMath.text(ring.of, unit: ring.unit, whole: true, locale: locale))").font(.system(size: 10)).foregroundStyle(t.quiet).lineLimit(1)
+                                Text(words("of", ["total": CardMath.text(ring.of, unit: ring.unit, whole: true, locale: locale)])).font(.system(size: 10)).foregroundStyle(t.quiet).lineLimit(1)
                             }.padding(.horizontal, 10)
                         }.frame(width: 76, height: 76)
                         Text(ring.label).font(Fonts.meta.weight(.medium)).foregroundStyle(t.quiet).lineLimit(1)
@@ -490,6 +493,7 @@ struct VerticalTimeline: View {
 
 struct HeatmapBlockView: View {
     @Environment(\.cardTheme) var t
+    @Environment(\.cardWords) var words
     var block: HeatmapBlock
 
     var body: some View {
@@ -517,9 +521,9 @@ struct HeatmapBlockView: View {
             }
             HStack(spacing: 4) {
                 Spacer()
-                Text(block.low ?? "Less").font(Fonts.meta).foregroundStyle(t.quiet)
+                Text(block.low ?? words("less")).font(Fonts.meta).foregroundStyle(t.quiet)
                 ForEach(0..<5, id: \.self) { RoundedRectangle(cornerRadius: 2).fill(t.ramp[$0]).frame(width: 10, height: 10) }
-                Text(block.high ?? "More").font(Fonts.meta).foregroundStyle(t.quiet)
+                Text(block.high ?? words("more")).font(Fonts.meta).foregroundStyle(t.quiet)
             }
         }
     }

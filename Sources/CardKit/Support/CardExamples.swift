@@ -293,5 +293,93 @@ public enum CardExamples {
            {"label": "Upload", "value": 38, "of": 100, "unit": "Mb/s", "symbol": "arrow.up"},
            {"label": "Signal", "value": 78, "of": 100, "unit": "%", "symbol": "wifi", "status": "good"}]}]}
         """#),
+        CardExample(name: "streak-award", about: "An achievement: a medal for a streak", json: #"""
+        {"eyebrow": "Food log · Sun 26 Oct",
+         "blocks": [{"type": "award", "title": "7-day streak", "symbol": "flame.fill", "tier": "gold",
+           "detail": "Every meal logged for a week. Honest logging is what makes the patterns findable.", "date": "26 Oct 2026"}],
+         "footnote": "Your longest streak so far was 5 days."}
+        """#),
+
+        CardExample(name: "personal-best", about: "A personal best, before and after", json: #"""
+        {"eyebrow": "Gym · Thu 23 Oct",
+         "blocks": [{"type": "award", "title": "New personal best", "symbol": "dumbbell.fill", "tier": "silver", "record": "Squat 90 kg → 100 kg",
+           "detail": "3 sets of 5. Up 10 kg since August.", "date": "23 Oct 2026"}]}
+        """#),
+
+        CardExample(name: "awards", about: "Medals earned, and the ones still to earn with progress", json: #"""
+        {"eyebrow": "Your awards · 2026",
+         "hero": {"value": "5", "unit": "of 9 earned"},
+         "blocks": [{"type": "awards", "awards": [
+           {"title": "7-day streak", "symbol": "flame.fill", "tier": "gold", "earned": true, "date": "26 Oct"},
+           {"title": "First 100 meals", "symbol": "fork.knife", "tier": "silver", "earned": true, "date": "14 Oct"},
+           {"title": "Month on budget", "symbol": "sterlingsign.circle.fill", "tier": "gold", "earned": true, "date": "30 Sep"},
+           {"title": "10 workouts", "symbol": "figure.run", "tier": "bronze", "earned": true, "date": "2 Oct"},
+           {"title": "Squat PB", "symbol": "dumbbell.fill", "slot": 7, "earned": true, "date": "23 Oct"},
+           {"title": "30-day streak", "symbol": "flame.fill", "earned": false, "progress": 7, "of": 30, "slot": 2},
+           {"title": "£1,000 saved", "symbol": "banknote.fill", "earned": false, "progress": 640, "of": 1000, "slot": 3},
+           {"title": "50 workouts", "symbol": "figure.run", "earned": false, "progress": 14, "of": 50, "slot": 3},
+           {"title": "Early riser", "symbol": "sunrise.fill", "earned": false, "progress": 3, "of": 10, "slot": 4}]}]}
+        """#),
+
+        CardExample(name: "parcel", about: "A delivery's steps: done, now, still to come", json: #"""
+        {"eyebrow": "Parcel · Sample Shop order",
+         "hero": {"value": "Today", "unit": "between 13:00 and 15:00", "symbol": "shippingbox.fill"},
+         "blocks": [{"type": "tracker", "steps": [
+           {"title": "Ordered", "time": "Fri 09:14", "state": "done"},
+           {"title": "Dispatched", "time": "Sat 18:02", "state": "done"},
+           {"title": "Out for delivery", "time": "Sun 08:40", "detail": "Driver is 6 stops away", "state": "current"},
+           {"title": "Delivered", "time": "expected 13:00–15:00"}]}],
+         "footnote": "From the carrier's tracking page, 26 Oct 10:05."}
+        """#),
+
+        CardExample(name: "route", about: "A route on a map with its stops", json: #"""
+        {"eyebrow": "Walk to the station · 18 min",
+         "hero": {"value": "1.4 km", "unit": "leave by 08:12"},
+         "blocks": [{"type": "map", "height": 220,
+           "pins": [{"lat": 51.5074, "lon": -0.1278, "title": "Start", "slot": 3}, {"lat": 51.5194, "lon": -0.1270, "title": "Station", "slot": 1}],
+           "route": [{"lat": 51.5074, "lon": -0.1278}, {"lat": 51.5110, "lon": -0.1290}, {"lat": 51.5150, "lon": -0.1262}, {"lat": 51.5194, "lon": -0.1270}]}],
+         "footnote": "Map data from Apple Maps."}
+        """#),
+
+        CardExample(name: "wifi", about: "A QR code a guest can scan", json: #"""
+        {"eyebrow": "Guest Wi-Fi",
+         "blocks": [{"type": "qr", "payload": "WIFI:T:WPA;S:Example Guest;P:example-only-not-real;;", "title": "Scan to join Example Guest",
+           "detail": "Point the camera at the code. Works on any phone."}]}
+        """#),
+
+        CardExample(name: "before-after", about: "An edit, before and after", json: #"""
+        {"eyebrow": "Photo · background removed",
+         "blocks": [{"type": "pair", "before": {"path": "~/Pictures/beach-1.jpg"}, "after": {"path": "~/Pictures/beach-2.jpg"}}],
+         "footnote": "The original is unchanged; the edit is a copy."}
+        """#),
+
+        CardExample(name: "workouts", about: "A month with the days you trained marked", json: #"""
+        {"eyebrow": "Workouts · October",
+         "hero": {"value": "14", "unit": "workouts this month"},
+         "status": {"status": "good", "text": "4 more than September"},
+         "blocks": [{"type": "month", "month": "2026-10", "today": 26, "legend": [{"name": "Run", "slot": 3}, {"name": "Gym", "slot": 7}],
+           "days": [{"day": 1, "slot": 3}, {"day": 3, "slot": 7}, {"day": 5, "slot": 3}, {"day": 8, "slot": 7}, {"day": 10, "slot": 3},
+                    {"day": 12, "slot": 3}, {"day": 14, "slot": 7}, {"day": 15, "slot": 3}, {"day": 17, "slot": 7}, {"day": 19, "slot": 3},
+                    {"day": 21, "slot": 7}, {"day": 23, "slot": 7}, {"day": 24, "slot": 3}, {"day": 26, "slot": 3}]}]}
+        """#),
+
+        CardExample(name: "refunds", about: "Spending with a refund: net total, the refund without a share", json: #"""
+        {"eyebrow": "This week · Mon 20 – Sun 26 Oct",
+         "blocks": [{"type": "breakdown", "rows": [
+           {"name": "Groceries", "value": {"amount": "84.20", "currency": "GBP"}, "slot": 1},
+           {"name": "Eating out", "value": {"amount": "46.50", "currency": "GBP"}, "slot": 2},
+           {"name": "Transport", "value": {"amount": "22.80", "currency": "GBP"}, "slot": 3},
+           {"name": "Refund · returned shoes", "value": {"amount": "-60.00", "currency": "GBP"}, "slot": 5}]}],
+         "footnote": "The refund comes off the total; it has no share of what was spent."}
+        """#),
+
+        CardExample(name: "budget-de", about: "The budget, with the kit's own words in German", json: #"""
+        {"eyebrow": "Budget Oktober · noch 9 Tage",
+         "wording": {"left_of": "übrig von {total}", "a_day": "Etwa {amount} pro Tag für die restlichen {days} Tage", "row_over": "{amount} drüber", "of": "von {total}"},
+         "blocks": [{"type": "limits", "days_left": 9, "total": {"amount": "1800", "currency": "EUR"}, "rows": [
+           {"name": "Lebensmittel", "value": {"amount": "212.35", "currency": "EUR"}, "of": {"amount": "300", "currency": "EUR"}, "slot": 1},
+           {"name": "Restaurants", "value": {"amount": "188.20", "currency": "EUR"}, "of": {"amount": "150", "currency": "EUR"}, "slot": 2},
+           {"name": "Verkehr", "value": {"amount": "64", "currency": "EUR"}, "of": {"amount": "120", "currency": "EUR"}, "slot": 3}]}]}
+        """#),
     ]
 }

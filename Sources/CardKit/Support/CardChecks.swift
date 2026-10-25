@@ -30,6 +30,17 @@ public enum CardChecks {
         for (index, block) in card.blocks.enumerated() {
             if let issue = problem(block, at: "blocks[\(index)]") { return issue }
         }
+        return problem(wording: card.wording)
+    }
+
+    /// Each replaced phrase must exist and use only the placeholders its English does (a misspelt id would
+    /// otherwise be ignored, and a misspelt placeholder printed as "{amout}").
+    static func problem(wording: [String: String]?) -> String? {
+        for (id, phrase) in (wording ?? [:]).sorted(by: { $0.key < $1.key }) {
+            guard let english = Words.english[id] else { return "wording.\(id): no such phrase (card words lists them)" }
+            let unknown = Words.placeholders(phrase).subtracting(Words.placeholders(english))
+            if let name = unknown.sorted().first { return "wording.\(id): {\(name)} isn't one of its placeholders (\(english))" }
+        }
         return nil
     }
 
@@ -192,6 +203,62 @@ public enum CardChecks {
             if (b.text ?? "").trimmingCharacters(in: .whitespaces).isEmpty && (b.bullets ?? []).isEmpty { return "\(p): give text or bullets" }
             return nil
 
+        case .award(let b):
+            return text(b.title, "\(p).title") ?? sfSymbol(b.symbol, "\(p).symbol") ?? tier(b.tier, "\(p).tier") ?? slot(b.slot, "\(p).slot")
+
+        case .awards(let b):
+            guard (1...12).contains(b.awards.count) else { return "\(p).awards: give 1 to 12 (got \(b.awards.count))" }
+            for (i, award) in b.awards.enumerated() {
+                let at = "\(p).awards[\(i)]"
+                if let issue = text(award.title, "\(at).title") ?? sfSymbol(award.symbol, "\(at).symbol") ?? tier(award.tier, "\(at).tier")
+                    ?? slot(award.slot, "\(at).slot") { return issue }
+                if award.progress != nil, (award.of?.value ?? 0) <= 0 { return "\(at): progress needs an of above zero" }
+                if let progress = award.progress, progress.value < 0 { return "\(at).progress is negative" }
+            }
+            return nil
+
+        case .tracker(let b):
+            guard (2...8).contains(b.steps.count) else { return "\(p).steps: give 2 to 8 (got \(b.steps.count))" }
+            for (i, step) in b.steps.enumerated() {
+                if let issue = text(step.title, "\(p).steps[\(i)].title") { return issue }
+                if let state = step.state, !["done", "current", "upcoming", "failed"].contains(state) {
+                    return "\(p).steps[\(i)].state: '\(state)' is not done, current, upcoming or failed"
+                }
+            }
+            return b.steps.filter { $0.state == "current" }.count > 1 ? "\(p).steps: at most one is current" : nil
+
+        case .map(let b):
+            guard b.pins.count <= 8 else { return "\(p).pins: at most 8 (got \(b.pins.count))" }
+            guard !b.pins.isEmpty || (b.route?.count ?? 0) >= 2 else { return "\(p): give pins, or a route of two points or more" }
+            for (i, pin) in b.pins.enumerated() {
+                if let issue = coordinate(pin.lat, pin.lon, "\(p).pins[\(i)]") ?? slot(pin.slot, "\(p).pins[\(i)].slot") { return issue }
+            }
+            for (i, point) in (b.route ?? []).enumerated() { if let issue = coordinate(point.lat, point.lon, "\(p).route[\(i)]") { return issue } }
+            if let height = b.height, !(120...320).contains(height) { return "\(p).height: give 120 to 320 points" }
+            return nil
+
+        case .qr(let b):
+            guard !b.payload.isEmpty else { return "\(p).payload is empty" }
+            return b.payload.utf8.count > 1000 ? "\(p).payload: at most 1,000 bytes, so the code stays scannable on a phone" : nil
+
+        case .pair(let b):
+            for (name, picture) in [("before", b.before), ("after", b.after)]
+                where NSImage(contentsOfFile: (picture.path as NSString).expandingTildeInPath) == nil {
+                return "\(p).\(name).path: no readable image at \(picture.path)"
+            }
+            return nil
+
+        case .month(let b):
+            guard let length = CardMath.monthLength(b.month) else { return "\(p).month: '\(b.month)' is not a YYYY-MM month" }
+            var seen = Set<Int>()
+            for (i, day) in b.days.enumerated() {
+                guard (1...length).contains(day.day) else { return "\(p).days[\(i)].day: \(day.day) is not in \(b.month)" }
+                guard seen.insert(day.day).inserted else { return "\(p).days[\(i)]: day \(day.day) is marked twice" }
+                if let issue = slot(day.slot, "\(p).days[\(i)].slot") { return issue }
+            }
+            if let today = b.today, !(1...length).contains(today) { return "\(p).today: \(today) is not in \(b.month)" }
+            return b.legend.flatMap { slots($0.map(\.slot), at: "\(p).legend") }
+
         case .images(let b):
             guard (1...maxImages).contains(b.images.count) else { return "\(p).images: give 1 to \(maxImages) (got \(b.images.count))" }
             if let columns = b.columns, !(1...4).contains(columns) { return "\(p).columns: give 1 to 4" }
@@ -211,6 +278,16 @@ public enum CardChecks {
 
     private static func text(_ value: String, _ path: String) -> String? {
         value.trimmingCharacters(in: .whitespaces).isEmpty ? "\(path) is empty" : nil
+    }
+
+    private static func tier(_ value: String?, _ path: String) -> String? {
+        guard let value else { return nil }
+        return ["gold", "silver", "bronze"].contains(value) ? nil : "\(path): '\(value)' is not gold, silver or bronze"
+    }
+
+    private static func coordinate(_ lat: Double, _ lon: Double, _ path: String) -> String? {
+        guard (-90...90).contains(lat), (-180...180).contains(lon) else { return "\(path): \(lat), \(lon) is not a place on Earth" }
+        return nil
     }
 
     private static func slot(_ value: Int?, _ path: String) -> String? {

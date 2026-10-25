@@ -41,7 +41,7 @@ final class GalleryTests: XCTestCase {
     }
 
     @MainActor
-    func testEveryExampleDrawsInBothThemes() throws {
+    func testEveryExampleDrawsInBothThemes() async throws {
         let out = ProcessInfo.processInfo.environment["CARDKIT_GALLERY"].map { URL(fileURLWithPath: $0) }
         if let out { try FileManager.default.createDirectory(at: out, withIntermediateDirectories: true) }
         let pictures = try standInPictures()
@@ -53,12 +53,21 @@ final class GalleryTests: XCTestCase {
             let card = try CardDecoder.card(from: Data(json.utf8))
             XCTAssertNil(CardChecks.problem(card), example.name)
             card.blocks.forEach { seen.insert($0.type) }
+            let text = CardText.text(card, locale: english)
+            XCTAssertTrue(text.hasPrefix(card.eyebrow), "\(example.name): the text version starts where the card does")
+            XCTAssertGreaterThan(text.split(separator: "\n").count, 1, example.name)
             for theme in CardTheme.allCases {
-                let picture = try CardRenderer.render(card, theme: theme, locale: english)
+                // Maps need the network: fetched only when writing the gallery to look at; the test draws the
+                // card's "not available" note instead.
+                let maps = out == nil ? [:] : await CardRenderer.maps(for: card, theme: theme)
+                let picture = try CardRenderer.render(card, theme: theme, locale: english, maps: maps)
                 XCTAssertEqual(picture.width, 1254, "\(example.name): 390 pt + 2 × 14 pt, at 3×")
                 XCTAssertGreaterThan(picture.height, 300, example.name)
                 XCTAssertEqual(Array(picture.png.prefix(4)), [0x89, 0x50, 0x4E, 0x47], "PNG")
-                if let out { try picture.png.write(to: out.appendingPathComponent("\(example.name)\(theme == .dark ? "-dark" : "").png")) }
+                if let out {
+                    try picture.png.write(to: out.appendingPathComponent("\(example.name)\(theme == .dark ? "-dark" : "").png"))
+                    if theme == .light { try text.write(to: out.appendingPathComponent("\(example.name).txt"), atomically: true, encoding: .utf8) }
+                }
             }
         }
         XCTAssertEqual(seen, Set(Block.types), "every block type has an example")
