@@ -8,6 +8,7 @@
 //  blocks' arithmetic and checks, and refunds.
 //
 
+import AppKit
 import Foundation
 import XCTest
 
@@ -167,6 +168,27 @@ final class NewBlocksTests: XCTestCase {
         XCTAssertEqual(try problem(#"{"type": "month", "month": "Oct", "days": []}"#), "blocks[0].month: 'Oct' is not a YYYY-MM month")
         XCTAssertEqual(try problem(#"{"type": "pair", "before": {"path": "/no/a.png"}, "after": {"path": "/no/b.png"}}"#),
                        "blocks[0].before.path: no readable image at /no/a.png")
+    }
+
+    @MainActor
+    func testTheMarginIsTransparentUnlessOpaqueIsAskedFor() throws {
+        let card = Card(eyebrow: "x", blocks: [.text(TextBlock(text: "hello"))])
+        func alphas(_ picture: RenderedCard) throws -> (corner: CGFloat, middle: CGFloat) {
+            let image = try XCTUnwrap(NSBitmapImageRep(data: picture.png))
+            return (image.colorAt(x: 2, y: 2)?.alphaComponent ?? -1, image.colorAt(x: image.pixelsWide / 2, y: image.pixelsHigh / 2)?.alphaComponent ?? -1)
+        }
+        for theme in CardTheme.allCases {
+            let clear = try alphas(CardRenderer.render(card, theme: theme))
+            XCTAssertEqual(clear.corner, 0, "\(theme): the margin lets the chat's background show")
+            XCTAssertEqual(clear.middle, 1, "\(theme): the card itself is solid")
+            XCTAssertEqual(try alphas(CardRenderer.render(card, theme: theme, opaque: true)).corner, 1, "\(theme): an opaque page fills the margin")
+        }
+        // …with the page's own colour: #F2F2F7 light (grouped background), black dark.
+        let light = try XCTUnwrap(NSBitmapImageRep(data: CardRenderer.render(card, theme: .light, opaque: true).png)?.colorAt(x: 2, y: 2)?.usingColorSpace(.sRGB))
+        // Colour management moves a channel by a unit or two; what matters is light grey, not white or black.
+        for channel in [light.redComponent, light.greenComponent, light.blueComponent] { XCTAssertTrue((230...252).contains(channel * 255), "\(channel * 255)") }
+        let dark = try XCTUnwrap(NSBitmapImageRep(data: CardRenderer.render(card, theme: .dark, opaque: true).png)?.colorAt(x: 2, y: 2)?.usingColorSpace(.sRGB))
+        XCTAssertLessThan(dark.redComponent * 255, 10)
     }
 
     func testAQRCodeIsDrawn() throws {

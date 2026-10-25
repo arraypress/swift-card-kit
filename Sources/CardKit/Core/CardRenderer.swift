@@ -24,18 +24,23 @@ public enum CardRenderer {
 
     /// Checks the card, then draws it at `scale` (3 → 1,254 px wide, phone width). Throws
     /// ``CardError/invalid(_:)`` naming the field when the card cannot be drawn.
+    ///
+    /// The margin around the card is transparent, so in a chat the card sits on the conversation's background;
+    /// `opaque` fills it with the theme's page colour instead (for documents and galleries).
     @MainActor
     public static func render(_ card: Card, theme: CardTheme = .light, locale: Locale = .current, scale: CGFloat = 3,
-                              maps: [Int: CGImage] = [:]) throws -> RenderedCard {
+                              maps: [Int: CGImage] = [:], opaque: Bool = false) throws -> RenderedCard {
         if let problem = CardChecks.problem(card) { throw CardError.invalid(problem) }
         let view = CardView(card: card)
             .environment(\.cardTheme, Theme.of(theme))
             .environment(\.cardLocale, locale)
             .environment(\.cardWords, Words(card.wording))
             .environment(\.cardMaps, maps)
+            .environment(\.cardOpaque, opaque)
             .environment(\.colorScheme, theme == .dark ? .dark : .light)
         let renderer = ImageRenderer(content: view)
         renderer.scale = scale
+        renderer.isOpaque = opaque
         guard let image = renderer.cgImage,
               let data = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) else {
             throw CardError.drawing

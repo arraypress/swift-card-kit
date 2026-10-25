@@ -14,6 +14,7 @@ import SwiftUI
 private struct ThemeKey: EnvironmentKey { static let defaultValue = Theme.light }
 private struct LocaleKey: EnvironmentKey { static let defaultValue = Locale.current }
 private struct WordsKey: EnvironmentKey { static let defaultValue = Words() }
+private struct OpaqueKey: EnvironmentKey { static let defaultValue = false }
 private struct MapsKey: EnvironmentKey { nonisolated(unsafe) static let defaultValue: [Int: CGImage] = [:] }
 
 extension EnvironmentValues {
@@ -25,6 +26,11 @@ extension EnvironmentValues {
     var cardWords: Words {
         get { self[WordsKey.self] }
         set { self[WordsKey.self] = newValue }
+    }
+    /// Draw the page around the card (grey / black) instead of leaving it transparent.
+    var cardOpaque: Bool {
+        get { self[OpaqueKey.self] }
+        set { self[OpaqueKey.self] = newValue }
     }
     /// Map snapshots prepared before drawing, by block index.
     var cardMaps: [Int: CGImage] {
@@ -38,16 +44,19 @@ extension EnvironmentValues {
     }
 }
 
-/// The card: 390 pt on a 14 pt page, 20 pt inside, sections 16 pt apart.
+/// The card: 390 pt with a 14 pt margin around it, 20 pt inside, sections 16 pt apart.
 struct CardShell<Content: View>: View {
     @Environment(\.cardTheme) var t
+    @Environment(\.cardOpaque) var opaque
     @ViewBuilder var content: Content
     var body: some View {
         VStack(alignment: .leading, spacing: Metric.gap) { content }
             .padding(Metric.pad).frame(width: Metric.width, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: Metric.cardRadius, style: .continuous).fill(t.card)
                 .shadow(color: .black.opacity(t.dark ? 0 : 0.06), radius: 12, y: 4))
-            .padding(Metric.margin).background(t.page)
+            // The margin leaves room for the shadow; it is transparent, so in a chat the card sits on the
+            // conversation's own background, unless an opaque page is asked for (docs, galleries).
+            .padding(Metric.margin).background(opaque ? t.page : Color.clear)
     }
 }
 

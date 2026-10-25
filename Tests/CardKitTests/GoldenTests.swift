@@ -51,7 +51,8 @@ final class GoldenTests: XCTestCase {
             for (placeholder, real) in pictures { json = json.replacingOccurrences(of: placeholder, with: real) }
             let card = try CardDecoder.card(from: Data(json.utf8))
             if card.blocks.contains(where: { $0.type == "map" }) { continue }
-            let picture = try CardRenderer.render(card, theme: .light, locale: Locale(identifier: "en_GB"), scale: 1)
+            // Opaque, so the references show the card on its page as before; transparency has its own test.
+            let picture = try CardRenderer.render(card, theme: .light, locale: Locale(identifier: "en_GB"), scale: 1, opaque: true)
             let reference = Self.folder.appendingPathComponent("\(example.name).png")
             if update { try picture.png.write(to: reference); continue }
             guard let stored = NSImage(contentsOf: reference)?.cgImage(forProposedRect: nil, context: nil, hints: nil),
