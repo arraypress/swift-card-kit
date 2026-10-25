@@ -181,6 +181,10 @@ public enum Block: Codable, Equatable, Sendable {
 public struct ListBlock: Codable, Equatable, Sendable {
     public var label: String?
     public var rows: [Row]
+
+    public init(label: String? = nil, rows: [Row]) {
+        self.label = label; self.rows = rows
+    }
 }
 
 public struct Row: Codable, Equatable, Sendable {
@@ -194,11 +198,19 @@ public struct Row: Codable, Equatable, Sendable {
     public var value: Shown?
     /// A checklist row: true ticked, false open.
     public var done: Bool?
+
+    public init(lead: String? = nil, symbol: String? = nil, status: Status? = nil, title: String, detail: String? = nil, value: Shown? = nil, done: Bool? = nil) {
+        self.lead = lead; self.symbol = symbol; self.status = status; self.title = title; self.detail = detail; self.value = value; self.done = done
+    }
 }
 
 /// `tiles`: two to four small figures side by side.
 public struct TilesBlock: Codable, Equatable, Sendable {
     public var tiles: [Tile]
+
+    public init(tiles: [Tile]) {
+        self.tiles = tiles
+    }
 }
 
 public struct Tile: Codable, Equatable, Sendable {
@@ -209,6 +221,10 @@ public struct Tile: Codable, Equatable, Sendable {
     public var detail: String?
     public var status: Status?
     public var symbol: String?
+
+    public init(label: String, value: Shown, unit: String? = nil, detail: String? = nil, status: Status? = nil, symbol: String? = nil) {
+        self.label = label; self.value = value; self.unit = unit; self.detail = detail; self.status = status; self.symbol = symbol
+    }
 }
 
 /// `breakdown`: a total split into parts, largest first, each with its share and change since last time.
@@ -218,6 +234,10 @@ public struct BreakdownBlock: Codable, Equatable, Sendable {
     public var unit: String?
     /// The total to compare with: "September by now".
     public var reference: Reference?
+
+    public init(label: String? = nil, rows: [Part], unit: String? = nil, reference: Reference? = nil) {
+        self.label = label; self.rows = rows; self.unit = unit; self.reference = reference
+    }
 }
 
 public struct Part: Codable, Equatable, Sendable {
@@ -226,11 +246,19 @@ public struct Part: Codable, Equatable, Sendable {
     /// The same part last time: drawn ↑ £40, ↓ £31, = same.
     public var previous: Amount?
     public var slot: Int?
+
+    public init(name: String, value: Amount, previous: Amount? = nil, slot: Int? = nil) {
+        self.name = name; self.value = value; self.previous = previous; self.slot = slot
+    }
 }
 
 public struct Reference: Codable, Equatable, Sendable {
     public var value: Amount
     public var label: String
+
+    public init(value: Amount, label: String) {
+        self.value = value; self.label = label
+    }
 }
 
 /// `limits`: each part against its limit, nearest first — budgets, daily targets.
@@ -244,6 +272,10 @@ public struct LimitsBlock: Codable, Equatable, Sendable {
     public var unit: String?
     /// "fullest" (default) or "given".
     public var order: String?
+
+    public init(label: String? = nil, rows: [LimitRow], total: Amount? = nil, daysLeft: Int? = nil, unit: String? = nil, order: String? = nil) {
+        self.label = label; self.rows = rows; self.total = total; self.daysLeft = daysLeft; self.unit = unit; self.order = order
+    }
 }
 
 public struct LimitRow: Codable, Equatable, Sendable {
@@ -251,6 +283,10 @@ public struct LimitRow: Codable, Equatable, Sendable {
     public var value: Amount
     public var of: Amount
     public var slot: Int?
+
+    public init(name: String, value: Amount, of: Amount, slot: Int? = nil) {
+        self.name = name; self.value = value; self.of = of; self.slot = slot
+    }
 }
 
 /// `bars`: one bar per period (Health-style), the latest highlighted; optional goal line, target band and average.
@@ -268,6 +304,10 @@ public struct BarsBlock: Codable, Equatable, Sendable {
     public var highlight: Int?
     /// The stack's parts, in the order of each bar's `parts`.
     public var legend: [Tag]?
+
+    public init(label: String? = nil, bars: [Bar], unit: String? = nil, goal: Amount? = nil, band: Band? = nil, average: Bool? = nil, highlight: Int? = nil, legend: [Tag]? = nil) {
+        self.label = label; self.bars = bars; self.unit = unit; self.goal = goal; self.band = band; self.average = average; self.highlight = highlight; self.legend = legend
+    }
 }
 
 public struct Bar: Codable, Equatable, Sendable {
@@ -276,11 +316,19 @@ public struct Bar: Codable, Equatable, Sendable {
     /// Missing: not logged — an empty slot, left out of the average.
     public var value: Amount?
     public var parts: [Amount]?
+
+    public init(label: String, value: Amount? = nil, parts: [Amount]? = nil) {
+        self.label = label; self.value = value; self.parts = parts
+    }
 }
 
 public struct Band: Codable, Equatable, Sendable {
     public var low: Amount
     public var high: Amount
+
+    public init(low: Amount, high: Amount) {
+        self.low = low; self.high = high
+    }
 }
 
 /// `trend`: lines over a period — the first series highlighted, up to two behind it; optional target pace and
@@ -299,22 +347,38 @@ public struct TrendBlock: Codable, Equatable, Sendable {
     public var smooth: Int?
     /// Labels for x values, e.g. {"1": "1 Oct"}; otherwise the numbers.
     public var xLabels: [String: String]?
+
+    public init(label: String? = nil, series: [Series], target: Target? = nil, end: Double? = nil, unit: String? = nil, area: Bool? = nil, smooth: Int? = nil, xLabels: [String: String]? = nil) {
+        self.label = label; self.series = series; self.target = target; self.end = end; self.unit = unit; self.area = area; self.smooth = smooth; self.xLabels = xLabels
+    }
 }
 
 public struct Series: Codable, Equatable, Sendable {
     public var name: String
     public var points: [Point]
+
+    public init(name: String, points: [Point]) {
+        self.name = name; self.points = points
+    }
 }
 
 public struct Point: Codable, Equatable, Sendable {
     public var x: Double
     public var value: Amount
+
+    public init(x: Double, value: Amount) {
+        self.x = x; self.value = value
+    }
 }
 
 public struct Target: Codable, Equatable, Sendable {
     public var value: Amount
     public var at: Double
     public var label: String?
+
+    public init(value: Amount, at: Double, label: String? = nil) {
+        self.value = value; self.at = at; self.label = label
+    }
 }
 
 /// `range`: a low–high bar per row on one shared scale (Weather's ten days, heart-rate ranges, sunrise–sunset).
@@ -326,6 +390,10 @@ public struct RangeBlock: Codable, Equatable, Sendable {
     public var style: String?
     /// A dot on the first row's bar: the value right now.
     public var now: Amount?
+
+    public init(label: String? = nil, rows: [RangeRow], unit: String? = nil, style: String? = nil, now: Amount? = nil) {
+        self.label = label; self.rows = rows; self.unit = unit; self.style = style; self.now = now
+    }
 }
 
 public struct RangeRow: Codable, Equatable, Sendable {
@@ -334,12 +402,20 @@ public struct RangeRow: Codable, Equatable, Sendable {
     public var high: Amount
     public var symbol: String?
     public var detail: String?
+
+    public init(label: String, low: Amount, high: Amount, symbol: String? = nil, detail: String? = nil) {
+        self.label = label; self.low = low; self.high = high; self.symbol = symbol; self.detail = detail
+    }
 }
 
 /// `hourly`: a strip of small columns — an hour, an icon, a value (Weather-style).
 public struct HourlyBlock: Codable, Equatable, Sendable {
     public var label: String?
     public var items: [HourlyItem]
+
+    public init(label: String? = nil, items: [HourlyItem]) {
+        self.label = label; self.items = items
+    }
 }
 
 public struct HourlyItem: Codable, Equatable, Sendable {
@@ -347,6 +423,10 @@ public struct HourlyItem: Codable, Equatable, Sendable {
     public var symbol: String?
     public var value: Shown
     public var detail: String?
+
+    public init(label: String, symbol: String? = nil, value: Shown, detail: String? = nil) {
+        self.label = label; self.symbol = symbol; self.value = value; self.detail = detail
+    }
 }
 
 /// `rings`: progress to goals, side by side or concentric (Activity-style).
@@ -354,6 +434,10 @@ public struct RingsBlock: Codable, Equatable, Sendable {
     public var rings: [Ring]
     /// "row" (default) or "concentric".
     public var style: String?
+
+    public init(rings: [Ring], style: String? = nil) {
+        self.rings = rings; self.style = style
+    }
 }
 
 public struct Ring: Codable, Equatable, Sendable {
@@ -362,11 +446,19 @@ public struct Ring: Codable, Equatable, Sendable {
     public var of: Amount
     public var unit: String?
     public var slot: Int?
+
+    public init(label: String, value: Amount, of: Amount, unit: String? = nil, slot: Int? = nil) {
+        self.label = label; self.value = value; self.of = of; self.unit = unit; self.slot = slot
+    }
 }
 
 /// `gauges`: one to four dials — battery, disk, signal, air quality.
 public struct GaugesBlock: Codable, Equatable, Sendable {
     public var gauges: [Dial]
+
+    public init(gauges: [Dial]) {
+        self.gauges = gauges
+    }
 }
 
 public struct Dial: Codable, Equatable, Sendable {
@@ -379,6 +471,10 @@ public struct Dial: Codable, Equatable, Sendable {
     public var status: Status?
     public var symbol: String?
     public var detail: String?
+
+    public init(label: String, value: Amount, of: Amount, unit: String? = nil, status: Status? = nil, symbol: String? = nil, detail: String? = nil) {
+        self.label = label; self.value = value; self.of = of; self.unit = unit; self.status = status; self.symbol = symbol; self.detail = detail
+    }
 }
 
 /// `segmented`: one bar split into parts with a legend (iPhone Storage-style); with `of`, the rest is drawn free.
@@ -389,6 +485,10 @@ public struct SegmentedBlock: Codable, Equatable, Sendable {
     public var unit: String?
     /// What the unused rest is called: "Free".
     public var restLabel: String?
+
+    public init(label: String? = nil, parts: [Part], of: Amount? = nil, unit: String? = nil, restLabel: String? = nil) {
+        self.label = label; self.parts = parts; self.of = of; self.unit = unit; self.restLabel = restLabel
+    }
 }
 
 /// `timeline`: spans and moments along one axis — a day's calendar, sleep stages, a video's events.
@@ -403,6 +503,10 @@ public struct TimelineBlock: Codable, Equatable, Sendable {
     public var legend: [Tag]?
     /// "horizontal" (default: sleep, a video's events) or "vertical" (a day's agenda, Calendar-style).
     public var layout: String?
+
+    public init(label: String? = nil, start: Double, end: Double, scale: String? = nil, items: [TimelineItem], legend: [Tag]? = nil, layout: String? = nil) {
+        self.label = label; self.start = start; self.end = end; self.scale = scale; self.items = items; self.legend = legend; self.layout = layout
+    }
 }
 
 public struct TimelineItem: Codable, Equatable, Sendable {
@@ -412,6 +516,10 @@ public struct TimelineItem: Codable, Equatable, Sendable {
     public var title: String?
     public var slot: Int?
     public var status: Status?
+
+    public init(from: Double, to: Double? = nil, title: String? = nil, slot: Int? = nil, status: Status? = nil) {
+        self.from = from; self.to = to; self.title = title; self.slot = slot; self.status = status
+    }
 }
 
 /// `heatmap`: one square per day, weeks as columns (streaks, activity).
@@ -424,12 +532,20 @@ public struct HeatmapBlock: Codable, Equatable, Sendable {
     /// Words for the lightest and darkest squares: "Less", "More".
     public var low: String?
     public var high: String?
+
+    public init(label: String? = nil, start: String, values: [Double?], low: String? = nil, high: String? = nil) {
+        self.label = label; self.start = start; self.values = values; self.low = low; self.high = high
+    }
 }
 
 /// `sparklines`: rows with a tiny line each and the change (Stocks-style).
 public struct SparklinesBlock: Codable, Equatable, Sendable {
     public var label: String?
     public var rows: [SparkRow]
+
+    public init(label: String? = nil, rows: [SparkRow]) {
+        self.label = label; self.rows = rows
+    }
 }
 
 public struct SparkRow: Codable, Equatable, Sendable {
@@ -441,12 +557,20 @@ public struct SparkRow: Codable, Equatable, Sendable {
     public var points: [Double]
     /// Down is good (a price you pay, a weight to lose).
     public var inverted: Bool?
+
+    public init(title: String, detail: String? = nil, value: Shown, change: Double? = nil, points: [Double], inverted: Bool? = nil) {
+        self.title = title; self.detail = detail; self.value = value; self.change = change; self.points = points; self.inverted = inverted
+    }
 }
 
 /// `chips`: tags that wrap — triggers, categories, keywords. Dashed when only maybe.
 public struct ChipsBlock: Codable, Equatable, Sendable {
     public var label: String?
     public var chips: [Chip]
+
+    public init(label: String? = nil, chips: [Chip]) {
+        self.label = label; self.chips = chips
+    }
 }
 
 public struct Chip: Codable, Equatable, Sendable {
@@ -454,6 +578,10 @@ public struct Chip: Codable, Equatable, Sendable {
     public var status: Status?
     public var slot: Int?
     public var maybe: Bool?
+
+    public init(text: String, status: Status? = nil, slot: Int? = nil, maybe: Bool? = nil) {
+        self.text = text; self.status = status; self.slot = slot; self.maybe = maybe
+    }
 }
 
 /// `comparison`: two choices side by side, the pick outlined.
@@ -461,6 +589,10 @@ public struct ComparisonBlock: Codable, Equatable, Sendable {
     public var options: [Choice]
     /// One sentence on why — the judgement, shown as given.
     public var reason: String?
+
+    public init(options: [Choice], reason: String? = nil) {
+        self.options = options; self.reason = reason
+    }
 }
 
 public struct Choice: Codable, Equatable, Sendable {
@@ -470,6 +602,10 @@ public struct Choice: Codable, Equatable, Sendable {
     public var detail: String?
     public var best: Bool?
     public var lines: [String]?
+
+    public init(name: String, value: Shown, unit: String? = nil, detail: String? = nil, best: Bool? = nil, lines: [String]? = nil) {
+        self.name = name; self.value = value; self.unit = unit; self.detail = detail; self.best = best; self.lines = lines
+    }
 }
 
 /// `table`: columns of figures — a league table, a split, a statement.
@@ -479,12 +615,20 @@ public struct TableBlock: Codable, Equatable, Sendable {
     public var rows: [[Shown]]
     /// The row to draw strong (yours).
     public var highlight: Int?
+
+    public init(label: String? = nil, columns: [Column], rows: [[Shown]], highlight: Int? = nil) {
+        self.label = label; self.columns = columns; self.rows = rows; self.highlight = highlight
+    }
 }
 
 public struct Column: Codable, Equatable, Sendable {
     public var title: String
     /// "leading" or "trailing" (default: trailing for numbers, leading for the first column).
     public var align: String?
+
+    public init(title: String, align: String? = nil) {
+        self.title = title; self.align = align
+    }
 }
 
 /// `score`: a match — two sides, two numbers, where it stands.
@@ -494,12 +638,20 @@ public struct ScoreBlock: Codable, Equatable, Sendable {
     /// "FT", "72'", "Q3 4:12".
     public var state: String
     public var detail: String?
+
+    public init(home: Side, away: Side, state: String, detail: String? = nil) {
+        self.home = home; self.away = away; self.state = state; self.detail = detail
+    }
 }
 
 public struct Side: Codable, Equatable, Sendable {
     public var name: String
     public var score: String
     public var detail: String?
+
+    public init(name: String, score: String, detail: String? = nil) {
+        self.name = name; self.score = score; self.detail = detail
+    }
 }
 
 /// `text`: a paragraph and/or bullets — a summary, a transcript excerpt (as a quote).
@@ -509,6 +661,10 @@ public struct TextBlock: Codable, Equatable, Sendable {
     public var bullets: [String]?
     /// Draw as a quotation (someone else's words).
     public var quote: Bool?
+
+    public init(label: String? = nil, text: String? = nil, bullets: [String]? = nil, quote: Bool? = nil) {
+        self.label = label; self.text = text; self.bullets = bullets; self.quote = quote
+    }
 }
 
 /// `images`: local pictures in a grid — search results, artwork, frames.
@@ -516,9 +672,17 @@ public struct ImagesBlock: Codable, Equatable, Sendable {
     public var images: [Picture]
     /// Columns: 1 (artwork) to 4; default 3, or 1 for a single image.
     public var columns: Int?
+
+    public init(images: [Picture], columns: Int? = nil) {
+        self.images = images; self.columns = columns
+    }
 }
 
 public struct Picture: Codable, Equatable, Sendable {
     public var path: String
     public var caption: String?
+
+    public init(path: String, caption: String? = nil) {
+        self.path = path; self.caption = caption
+    }
 }
