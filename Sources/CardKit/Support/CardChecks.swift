@@ -74,7 +74,8 @@ public enum CardChecks {
             if let issue = slots(b.rows.map(\.slot), at: "\(p).rows") { return issue }
             var amounts = b.rows.enumerated().flatMap { i, row in [(row.value, "\(p).rows[\(i)].value"), (row.of, "\(p).rows[\(i)].of")] }
             if let total = b.total { amounts.append((total, "\(p).total")) }
-            return negative(amounts) ?? money(amounts)
+            if let spent = b.spent { amounts.append((spent, "\(p).spent")) }
+            return negative(amounts.filter { $0.1 != "\(p).spent" }) ?? money(amounts)
 
         case .bars(let b):
             guard (1...maxBars).contains(b.bars.count) else { return "\(p).bars: give 1 to \(maxBars) (got \(b.bars.count))" }

@@ -294,14 +294,17 @@ public struct LimitsBlock: Codable, Equatable, Sendable {
     public var rows: [LimitRow]
     /// The overall limit; without it, the rows' limits added up.
     public var total: Amount?
+    /// Everything spent against `total`, when the rows are only some of it (a budget for the month, limits on a
+    /// few categories); without it, the rows added up.
+    public var spent: Amount?
     /// Days left in the period: "about £68 a day".
     public var daysLeft: Int?
     public var unit: String?
     /// "fullest" (default) or "given".
     public var order: String?
 
-    public init(label: String? = nil, rows: [LimitRow], total: Amount? = nil, daysLeft: Int? = nil, unit: String? = nil, order: String? = nil) {
-        self.label = label; self.rows = rows; self.total = total; self.daysLeft = daysLeft; self.unit = unit; self.order = order
+    public init(label: String? = nil, rows: [LimitRow], total: Amount? = nil, spent: Amount? = nil, daysLeft: Int? = nil, unit: String? = nil, order: String? = nil) {
+        self.label = label; self.rows = rows; self.total = total; self.spent = spent; self.daysLeft = daysLeft; self.unit = unit; self.order = order
     }
 }
 

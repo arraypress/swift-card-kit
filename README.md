@@ -131,7 +131,7 @@ name any that changed by more than 0.5 % of their pixels — a warning, because 
 ## Measured
 
 - 1,254 px wide, about 0.1 s a card from the command line (`card`, 2026-10-26, M-series Mac).
-- 46 tests: every rule of the arithmetic, the checks, the wording, the text version and the private files against
+- 48 tests: every rule of the arithmetic, the checks, the wording, the text version and the private files against
   hand-worked values; all 34 examples drawn in both themes; 33 reference pictures compared. Deliberate breaks of the
   rules: 31 of 32 (0.1) and 21 of 22 (0.2) made a test fail; the two that didn't are equivalent (a tie-break Swift's
   stable sort already makes, and a tracker rule the "current" state always overrides).

@@ -104,10 +104,10 @@ struct BarsBlockView: View {
                 }
             } else if block.goal != nil || block.band != nil || block.average == true {
                 HStack(spacing: 14) {
-                    if let goal = block.goal { LegendKey(color: t.goodInk, text: words("legend_goal", ["amount": label(CardMath.double(goal))]), width: 1.5, dashed: true) }
+                    if let goal = block.goal { LegendKey(color: t.goodInk, text: words("legend_goal", ["amount": CardMath.text(goal, unit: block.unit, whole: true, locale: locale)]), width: 1.5, dashed: true) }
                     if block.band != nil { LegendKey(color: t.good.opacity(0.35), text: words("legend_band"), square: true) }
                     if block.average == true, let average = CardMath.average(block) {
-                        LegendKey(color: t.ink.opacity(0.55), text: words("legend_average", ["amount": label(average)]), width: 1, dashed: true)
+                        LegendKey(color: t.ink.opacity(0.55), text: words("legend_average", ["amount": CardMath.text(Amount(Decimal(average.rounded()), currency: currency), unit: block.unit, whole: true, locale: locale)]), width: 1, dashed: true)
                     }
                 }
             }
@@ -244,7 +244,7 @@ struct RangeBlockView: View {
                 if index > 0 { Divider().overlay(t.divider) }
                 HStack(spacing: 10) {
                     Text(row.label).font(Fonts.row).foregroundStyle(t.ink).frame(width: 46, alignment: .leading).lineLimit(1)
-                    if let symbol = row.symbol { Image(systemName: symbol).symbolRenderingMode(.multicolor).font(.system(size: 16)).frame(width: 24) }
+                    if let symbol = row.symbol { Image(systemName: symbol).symbolRenderingMode(.multicolor).font(.system(size: 16)).lifted(t).frame(width: 24) }
                     Text(CardMath.text(row.low, unit: block.unit, whole: true, locale: locale)).font(Fonts.body.monospacedDigit()).foregroundStyle(t.quiet)
                         .frame(width: 40, alignment: .trailing)
                     GeometryReader { g in

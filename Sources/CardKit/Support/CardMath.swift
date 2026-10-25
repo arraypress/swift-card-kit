@@ -27,9 +27,11 @@ public enum CardMath {
     public static func text(_ amount: Amount, whole: Bool = false, locale: Locale = .current) -> String {
         if let currency = amount.currency {
             let places = whole ? 0 : Currencies.exponent(currency)
-            return amount.value.formatted(.currency(code: currency).locale(locale).precision(.fractionLength(places)))
+            return amount.value.formatted(.currency(code: currency).locale(locale).precision(.fractionLength(places))
+                .rounded(rule: .toNearestOrAwayFromZero))
         }
-        return amount.value.formatted(.number.locale(locale).precision(.fractionLength(0...(whole ? 0 : 1))))
+        // Half away from zero, as people round (£12.50 → £13), not to even.
+        return amount.value.formatted(.number.locale(locale).precision(.fractionLength(0...(whole ? 0 : 1))).rounded(rule: .toNearestOrAwayFromZero))
     }
 
     /// An amount with its unit after a plain number: "2,140 kcal"; money carries its own symbol.
@@ -99,7 +101,7 @@ public enum CardMath {
 
     /// The overall limit and how much of it is used.
     public static func totals(_ block: LimitsBlock) -> (used: Amount, limit: Amount) {
-        (sum(block.rows.map(\.value)) ?? Amount(0), block.total ?? sum(block.rows.map(\.of)) ?? Amount(0))
+        (block.spent ?? sum(block.rows.map(\.value)) ?? Amount(0), block.total ?? sum(block.rows.map(\.of)) ?? Amount(0))
     }
 
     /// Rows with their slots, nearest their limit first (ties keep their order), or as given.

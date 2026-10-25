@@ -191,6 +191,25 @@ final class NewBlocksTests: XCTestCase {
         XCTAssertLessThan(dark.redComponent * 255, 10)
     }
 
+    func testABudgetCountsEverythingSpentNotJustItsBudgetedRows() {
+        // Groceries and coffee have limits; the month's spending (£1,200) is more than those two rows.
+        let block = LimitsBlock(rows: [LimitRow(name: "Groceries", value: gbp("212.35"), of: gbp("300")), LimitRow(name: "Coffee", value: gbp("63.40"), of: gbp("50"))],
+                                total: gbp("1800"), spent: gbp("1200"), daysLeft: 10)
+        XCTAssertEqual(CardMath.totals(block).used, gbp("1200"))
+        XCTAssertEqual(CardMath.hero(block, locale: en), Hero(value: .text("£600"), unit: "left of £1,800"))
+        XCTAssertEqual(CardMath.status(block, locale: en).text, "About £60 a day for the 10 days left")
+        var rowsOnly = block; rowsOnly.spent = nil
+        XCTAssertEqual(CardMath.totals(rowsOnly).used, gbp("275.75"), "without spent, the rows added up")
+    }
+
+    func testWholeAmountsRoundHalfAwayFromZero() {
+        XCTAssertEqual(CardMath.text(gbp("12.50"), whole: true, locale: en), "£13", "as people round, not to even")
+        XCTAssertEqual(CardMath.text(gbp("13.50"), whole: true, locale: en), "£14")
+        XCTAssertEqual(CardMath.text(Amount(Decimal(string: "2.5")!), whole: true, locale: en), "3")
+        XCTAssertEqual(CardMath.text(Amount(Decimal(string: "0.25")!), locale: en), "0.3")
+        XCTAssertEqual(CardMath.text(gbp("-12.50"), whole: true, locale: en), "-£13")
+    }
+
     func testAQRCodeIsDrawn() throws {
         let code = try XCTUnwrap(QRCode.image("https://example.com"))
         XCTAssertEqual(code.width, code.height, "square")

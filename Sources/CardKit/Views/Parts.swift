@@ -291,3 +291,11 @@ struct Footnote: View {
     var text: String
     var body: some View { Text(text).font(Fonts.footnote).foregroundStyle(t.quiet).fixedSize(horizontal: false, vertical: true) }
 }
+
+extension View {
+    /// A multicolour SF Symbol on a light card: Apple draws weather clouds and moons white, which vanish on white,
+    /// so they get a soft shadow for an edge (as Apple's light widgets do). Dark cards need nothing.
+    func lifted(_ theme: Theme) -> some View {
+        shadow(color: .black.opacity(theme.dark ? 0 : 0.28), radius: 1.2, y: 0.6)
+    }
+}

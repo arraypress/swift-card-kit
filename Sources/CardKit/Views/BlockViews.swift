@@ -81,7 +81,7 @@ struct TilesBlockView: View {
             ForEach(Array(block.tiles.enumerated()), id: \.offset) { _, tile in
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(spacing: 5) {
-                        if let symbol = tile.symbol { Image(systemName: symbol).symbolRenderingMode(.multicolor) }
+                        if let symbol = tile.symbol { Image(systemName: symbol).symbolRenderingMode(.multicolor).lifted(t) }
                         Text(tile.label).lineLimit(1)
                     }.font(Fonts.meta).foregroundStyle(t.quiet)
                     Text(CardMath.text(tile.value, unit: tile.unit, whole: true, locale: locale))
@@ -233,7 +233,7 @@ struct HourlyBlockView: View {
                 ForEach(Array(block.items.enumerated()), id: \.offset) { _, item in
                     VStack(spacing: 7) {
                         Text(item.label).font(Fonts.meta.weight(.medium)).foregroundStyle(t.quiet)
-                        Image(systemName: item.symbol ?? "circle.dotted").symbolRenderingMode(.multicolor).font(.system(size: 20)).frame(height: 22)
+                        Image(systemName: item.symbol ?? "circle.dotted").symbolRenderingMode(.multicolor).font(.system(size: 20)).lifted(t).frame(height: 22)
                         Text(CardMath.text(item.value, locale: locale)).font(.system(size: 15, weight: .semibold, design: .rounded)).foregroundStyle(t.ink)
                         if let detail = item.detail { Text(detail).font(Fonts.meta).foregroundStyle(t.slot(1)) }
                     }.frame(maxWidth: .infinity)

@@ -34,7 +34,7 @@ struct HeroView: View {
     var body: some View {
         HStack(alignment: .center, spacing: 14) {
             if let symbol = hero.symbol {
-                Image(systemName: symbol).symbolRenderingMode(.multicolor).font(.system(size: 42)).frame(minWidth: 48)
+                Image(systemName: symbol).symbolRenderingMode(.multicolor).font(.system(size: 42)).lifted(t).frame(minWidth: 48)
             }
             VStack(alignment: .leading, spacing: 4) {
                 HeroNumber(value: CardMath.text(hero.value, locale: locale), unit: hero.unit)
