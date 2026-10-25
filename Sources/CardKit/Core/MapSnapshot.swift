@@ -57,10 +57,11 @@ enum MapSnapshot {
               let base = snapshot.image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
         context.interpolationQuality = .high
         context.draw(base, in: CGRect(x: 0, y: 0, width: width, height: height))
-        // Snapshot points are top-left in points; the context is bottom-left in pixels.
+        // On macOS a snapshot's points are already bottom-left, like the context: only the scale changes.
+        // (MEASURED 2026-10-26: flipping them put the southern pin at the top.)
         func pixel(_ lat: Double, _ lon: Double) -> CGPoint {
             let p = snapshot.point(for: CLLocationCoordinate2D(latitude: lat, longitude: lon))
-            return CGPoint(x: p.x * scale, y: (size.height - p.y) * scale)
+            return CGPoint(x: p.x * scale, y: p.y * scale)
         }
         if let route = block.route, route.count > 1 {
             let path = CGMutablePath()
