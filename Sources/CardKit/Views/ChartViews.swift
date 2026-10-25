@@ -86,10 +86,11 @@ struct BarsBlockView: View {
             .chartYScale(domain: 0...top)
             .chartXAxis {
                 AxisMarks(values: Array(stride(from: 0, to: count, by: every)).map(Double.init)) { value in
-                    AxisValueLabel(centered: false) {
+                    AxisValueLabel(anchor: .top) {
                         if let v = value.as(Double.self), block.bars.indices.contains(Int(v)) {
+                            // fixedSize: at the plot's edge Charts would otherwise squeeze the label to "…".
                             Text(block.bars[Int(v)].label).font(Fonts.meta.weight(Int(v) == strong ? .semibold : .regular))
-                                .foregroundStyle(Int(v) == strong ? t.ink : t.quiet)
+                                .foregroundStyle(Int(v) == strong ? t.ink : t.quiet).fixedSize()
                         }
                     }
                 }

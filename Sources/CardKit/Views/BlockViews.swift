@@ -67,9 +67,10 @@ struct TilesBlockView: View {
     @Environment(\.cardLocale) var locale
     var block: TilesBlock
     var body: some View {
+        // Each tile fills the row's height, so a tile without a detail line is as tall as its neighbours.
         HStack(alignment: .top, spacing: 10) {
             ForEach(Array(block.tiles.enumerated()), id: \.offset) { _, tile in
-                Panel(padding: 12) {
+                VStack(alignment: .leading, spacing: 10) {
                     HStack(spacing: 5) {
                         if let symbol = tile.symbol { Image(systemName: symbol).symbolRenderingMode(.multicolor) }
                         Text(tile.label).lineLimit(1)
@@ -82,7 +83,9 @@ struct TilesBlockView: View {
                             Text(detail).foregroundStyle(tile.status.map { t.look($0).ink } ?? t.quiet).lineLimit(2)
                         }.font(Fonts.meta)
                     }
-                }.frame(maxHeight: .infinity, alignment: .top)
+                }
+                .padding(12).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .background(RoundedRectangle(cornerRadius: Metric.panelRadius, style: .continuous).fill(t.panel))
             }
         }.fixedSize(horizontal: false, vertical: true)
     }
