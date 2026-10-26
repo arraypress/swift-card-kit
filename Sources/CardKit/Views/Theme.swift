@@ -40,13 +40,16 @@ struct Theme: Sendable {
         ramp: [0xEBEDF0, 0xB7D3F6, 0x6DA7EC, 0x2A78D6, 0x184F95].map(hex),
         dark: false)
 
+    /// Apple's elevated dark colours (what sheets, popovers and widgets use above a background): a card that stands
+    /// out on Messages' #252525 on a Mac (MEASURED from a screenshot, 2026-10-26 — #1C1C1E vanished into it) and on
+    /// an iPhone's black alike.
     static let dark = Theme(
-        page: .black, card: hex(0x1C1C1E), panel: hex(0x2C2C2E),
-        ink: hex(0xF5F5F7), quiet: hex(0x98989F), track: hex(0x3A3A3C), divider: hex(0x38383A),
+        page: .black, card: hex(0x2C2C2E), panel: hex(0x3A3A3C),
+        ink: hex(0xF5F5F7), quiet: hex(0xA1A1A8), track: hex(0x48484A), divider: hex(0x48484A),
         good: hex(0x30D158), goodInk: hex(0x30D158), over: hex(0xFF9F0A), overInk: hex(0xFF9F0A),
         critical: hex(0xFF453A), criticalInk: hex(0xFF6961),
         slots: [0x3987E5, 0xD95926, 0x199E70, 0xC98500, 0xD55181, 0x008300, 0x9085E9, 0xE66767].map(hex),
-        ramp: [0x2C2C2E, 0x184F95, 0x256ABF, 0x3987E5, 0x86B6EF].map(hex),
+        ramp: [0x3A3A3C, 0x184F95, 0x256ABF, 0x3987E5, 0x86B6EF].map(hex),
         dark: true)
 
     static func of(_ theme: CardTheme) -> Theme { theme == .dark ? dark : light }

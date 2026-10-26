@@ -53,7 +53,10 @@ struct CardShell<Content: View>: View {
         VStack(alignment: .leading, spacing: Metric.gap) { content }
             .padding(Metric.pad).frame(width: Metric.width, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: Metric.cardRadius, style: .continuous).fill(t.card)
-                .shadow(color: .black.opacity(t.dark ? 0 : 0.06), radius: 12, y: 4))
+                .shadow(color: .black.opacity(t.dark ? 0.35 : 0.06), radius: 12, y: 4))
+            // Dark: Apple's hairline edge, so the card holds its shape on any dark background.
+            .overlay(RoundedRectangle(cornerRadius: Metric.cardRadius, style: .continuous)
+                .strokeBorder(Color.white.opacity(t.dark ? 0.09 : 0), lineWidth: 0.5))
             // The margin leaves room for the shadow; it is transparent, so in a chat the card sits on the
             // conversation's own background, unless an opaque page is asked for (docs, galleries).
             .padding(Metric.margin).background(opaque ? t.page : Color.clear)
